@@ -1,10 +1,12 @@
-import express, { Request, Response, NextFunction } from 'express';
-import 'express-async-errors';
-import cors from 'cors';
 import axios from 'axios';
+import cors from 'cors';
 import dotenv from 'dotenv';
+import express, { NextFunction, Request, Response } from 'express';
+import 'express-async-errors';
 import morgan from 'morgan';
+import { ApiService } from './api.util';
 import { setupSwagger } from './swagger.config';
+import { TokenGeneratedType } from './types';
 
 //#region App Setup
 const app = express();
@@ -14,6 +16,14 @@ dotenv.config({
 });
 const PORT = process.env.PORT || 5000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const API_URL = process.env.API_URL || 'https://api.sandbox.safehavenmfb.com';
+const CLIENT_ASSERTION = process.env.CLIENT_ASSERTION || 'xxx';
+const CLIENT_ID = process.env.CLIENT_ID || 'xxx';
+
+const SafeHavenApi = new ApiService('https://api.sandbox.safehavenmfb.com');
+
+let accessToken: string | null = null;
+let refreshToken: string | null = null;
 
 app.use(express.json());
 app.use(
@@ -28,7 +38,38 @@ setupSwagger(app, BASE_URL);
 //#endregion App Setup
 
 //#region Code here
-console.log('Hello world');
+
+/**
+ * @swagger
+ * /exchange-client-credentials:
+ *  post:
+ *   summary: Exchange client credentials for an access token
+ *   description: This endpoint exchanges client credentials for an access token from the specified token URL.
+ *   tags: [Auth]
+ *   responses:
+ *    '200':
+ *      description: Successfully exchanged client credentials for an access token.
+ */
+app.post('/exchange-client-credentials', async (req: Request, res: Response) => {
+  const grantType = 'client_credentials'; // client_credentials, authorization_code, refresh_token
+  const clientAssertionType = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'; //default
+  // const refreshToken = undefined; // Pass when you want to generate a new API token
+
+  const response = await SafeHavenApi.post<TokenGeneratedType>('/oauth2/token', {
+    grant_type: grantType,
+    client_id: CLIENT_ID,
+    client_assertion_type: clientAssertionType,
+    client_assertion: CLIENT_ASSERTION,
+    // refresh_token: refreshToken, // Uncomment when you want to generate a new API token
+  });
+  if (!response) return res.send({ success: false, message: 'Failed to generate token' });
+
+  accessToken = response.access_token;
+  refreshToken = response.refresh_token;
+
+  return res.send({ success: true, message: 'Token generated', data: response });
+});
+
 //#endregion
 
 //#region Server Setup
