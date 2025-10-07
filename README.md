@@ -1,6 +1,6 @@
-# Typescript-SF-Template-App
+# SafeHaven-MFB-API-Demo
 
-This is a single file TypeScript template app for faster idea testing and prototyping. It contains tests, one demo root API call, basic async error handling, one demo axios call, and .env support.
+Simple API to demonstrate the SafeHaven MFB's banking and virtual accounts feature
 
 **Prerequisites**
 
