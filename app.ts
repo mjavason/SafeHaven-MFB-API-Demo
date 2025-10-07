@@ -53,7 +53,6 @@ setupSwagger(app, BASE_URL);
 app.post('/exchange-client-credentials', async (req: Request, res: Response) => {
   const grantType = 'client_credentials'; // client_credentials, authorization_code, refresh_token
   const clientAssertionType = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'; //default
-  // const refreshToken = undefined; // Pass when you want to generate a new API token
 
   const response = await SafeHavenApi.post<TokenGeneratedType>('/oauth2/token', {
     grant_type: grantType,
@@ -68,6 +67,25 @@ app.post('/exchange-client-credentials', async (req: Request, res: Response) => 
   refreshToken = response.refresh_token;
 
   return res.send({ success: true, message: 'Token generated', data: response });
+});
+
+/**
+ * @swagger
+ * /webhook:
+ *  post:
+ *   summary: Receive webhook notifications
+ *   description: This endpoint receives webhook notifications from the payment provider.
+ *   tags: [Payment]
+ *   responses:
+ *    '200':
+ *      description: Successfully received webhook notification.
+ */
+app.post('/webhook', (req: Request, res: Response) => {
+  console.log('Received webhook notification:', req.body);
+  
+  // Process the webhook data as needed
+
+  return res.send({ success: true, message: 'Webhook received' });
 });
 
 //#endregion
