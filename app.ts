@@ -21,10 +21,10 @@ const API_URL = process.env.API_URL || 'https://api.sandbox.safehavenmfb.com';
 const CLIENT_ASSERTION = process.env.CLIENT_ASSERTION || 'xxx';
 const CLIENT_ID = process.env.CLIENT_ID || 'xxx';
 
-const SafeHavenApi = new ApiService('https://api.sandbox.safehavenmfb.com');
+const SafeHavenApi = new ApiService(API_URL);
 
 let accessToken: string | null =
-  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FwaS5zYW5kYm94LnNhZmVoYXZlbm1mYi5jb20iLCJzdWIiOiI5OTA0MGI4MWNlZGQ3NzVlMGZjYWM0OTE2NDdjZGMwMCIsImF1ZCI6Imh0dHBzOi8vZGlubmcuY29tIiwianRpIjoiMjIzYzVhY2VlNTE3NjZmOWJkNDczYjRlYzYxNDBkOGQiLCJncmFudF90eXBlIjoiYWNjZXNzX3Rva2VuIiwic2NvcGVzIjpbIlJFQUQiLCJXUklURSIsIlBBWSJdLCJpYnNfY2xpZW50X2lkIjoiNjhkYmRmNjhmMjkwMGMwMDI0N2JlZDA3IiwiaWJzX3VzZXJfaWQiOiI2OGRiZGYxNWYyOTAwYzAwMjQ3YmVjZTAiLCJpYXQiOjE3NTk4NTI4NzMsImV4cCI6MTc1OTg1NTI3M30.qs-6tV5AX2HpA19-4gu4JDMmKxtoQL55Zstt-l-ReNvgIeZMiwiOnjnej2zvnxH_1xeyLFy2hN3YHcepO5qRe2V3qdTpBzLbAag46vt3qf4Ewmcw5xK6cO3wisHy8F1PF0iqgSaA55X99QgpM1ungz3mPkUpSX47YuME_uBWPmA';
+  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FwaS5zYW5kYm94LnNhZmVoYXZlbm1mYi5jb20iLCJzdWIiOiI5OTA0MGI4MWNlZGQ3NzVlMGZjYWM0OTE2NDdjZGMwMCIsImF1ZCI6Imh0dHBzOi8vZGlubmcuY29tIiwianRpIjoiYzA3ZDdjYWNjYmRhYzU1NGUzZjcwNmZhNzBiYmZlN2EiLCJncmFudF90eXBlIjoiYWNjZXNzX3Rva2VuIiwic2NvcGVzIjpbIlJFQUQiLCJXUklURSIsIlBBWSJdLCJpYnNfY2xpZW50X2lkIjoiNjhkYmRmNjhmMjkwMGMwMDI0N2JlZDA3IiwiaWJzX3VzZXJfaWQiOiI2OGRiZGYxNWYyOTAwYzAwMjQ3YmVjZTAiLCJpYXQiOjE3NTk4NTU5MTUsImV4cCI6MTc1OTg1ODMxNX0.xWeVn3ThXctQezWCdWEteGS3BBYSBIuxQ3G0fll6C-JiUTcWCksk5c4ebm1hDD-RJGD3RK0uwyrs6KsP8P0oWQlSozCrSclRmCgXm4Bc54p--fLrfi_Mw4LaYue-pwtrfguyiHvqRSSOnmB7uzwKsv3Xl4sUFuNj2fcYYK6m5Bw';
 let refreshToken: string | null = null;
 let ibsClientId: string | null = '68dbdf68f2900c00247bed07';
 
@@ -136,7 +136,100 @@ app.post('/account', async (req: Request, res: Response) => {
     return res.status(500).send({ success: false, message: 'Failed to create account' });
   }
 
-  return res.send({ success: true, message: 'Account created', data: response.data });
+  return res.send({ success: true, message: response.message, data: response.data });
+});
+
+/**
+ * @swagger
+ * /sub-account:
+ *  post:
+ *   summary: (Failing) Create a new sub-account
+ *   description: This endpoint creates a new sub-account under your main account
+ *   tags: [Payment]
+ *   responses:
+ *    '200':
+ *      description: Successfully created sub bank account.
+ *    '400':
+ *      description: Access token is missing.
+ *    '500':
+ *      description: Internal server error.
+ */
+app.post('/sub-account', async (req: Request, res: Response) => {
+  if (!accessToken || !ibsClientId) {
+    return res
+      .status(401)
+      .send({ success: false, message: 'Access token is missing. Please generate a token first.' });
+  }
+
+  const data = {
+    phoneNumber: '08012345678',
+    emailAddress: 'johndoe@example.com',
+    externalReference: 'your-external-reference',
+    identityType: 'BVN', // NIN, vNIN, BVN, BVNUSSD, vID
+    identityNumber: '12345678901',
+    identityId: '1234567890',
+    otp: '1234', // Gotten after calling /initiate-verification
+    //  callbackUrl: 'https://your-callback-url.com', // ignore to use default webhook url
+  };
+
+  const response = await SafeHavenApi.post<any>(
+    '/accounts/v2/subaccount',
+    data,
+    {
+      headers: {
+        ClientID: ibsClientId,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+  if (!response) {
+    return res.status(500).send({ success: false, message: 'Failed to create account' });
+  }
+
+  console.log(response);
+  return res.send({ success: true, message: response.message, data: response.data });
+});
+
+/**
+ * @swagger
+ * /initiate-verification:
+ *  post:
+ *   summary: (Failing) Initiate the verification process
+ *   description: This endpoint initiates the verification process for a sub-account
+ *   tags: [Payment]
+ *   responses:
+ *    '200':
+ *      description: Successfully initiated verification process.
+ *    '400':
+ *      description: Access token is missing.
+ *    '500':
+ *      description: Internal server error.
+ */
+app.post('/initiate-verification', async (req: Request, res: Response) => {
+  if (!accessToken || !ibsClientId) {
+    return res
+      .status(401)
+      .send({ success: false, message: 'Access token is missing. Please generate a token first.' });
+  }
+
+  const data = {
+    type: 'NIN', // NIN, vNIN, BVN, BVNUSSD, CAC, CREDITCHECK
+    number: '67659244208',
+    debitAccountNumber: '0115350641', // Your main account number
+  };
+
+  const response = await SafeHavenApi.post<any>('/identity/v2', data, {
+    headers: {
+      ClientID: ibsClientId,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  if (!response) {
+    return res.status(500).send({ success: false, message: 'Failed to initiate verification' });
+  }
+
+  console.log(response);
+  return res.send({ success: true, message: response.message, data: response.data });
 });
 
 //#endregion
