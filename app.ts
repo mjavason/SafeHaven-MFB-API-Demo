@@ -6,7 +6,8 @@ import 'express-async-errors';
 import morgan from 'morgan';
 import { ApiService } from './api.util';
 import { setupSwagger } from './swagger.config';
-import { TokenGeneratedType } from './types';
+import { GenerateBankAccountResultType } from './types/generate-bank-account.type';
+import { TokenGeneratedType } from './types/generate-token.type';
 
 //#region App Setup
 const app = express();
@@ -22,8 +23,10 @@ const CLIENT_ID = process.env.CLIENT_ID || 'xxx';
 
 const SafeHavenApi = new ApiService('https://api.sandbox.safehavenmfb.com');
 
-let accessToken: string | null = null;
+let accessToken: string | null =
+  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FwaS5zYW5kYm94LnNhZmVoYXZlbm1mYi5jb20iLCJzdWIiOiI5OTA0MGI4MWNlZGQ3NzVlMGZjYWM0OTE2NDdjZGMwMCIsImF1ZCI6Imh0dHBzOi8vZGlubmcuY29tIiwianRpIjoiMjIzYzVhY2VlNTE3NjZmOWJkNDczYjRlYzYxNDBkOGQiLCJncmFudF90eXBlIjoiYWNjZXNzX3Rva2VuIiwic2NvcGVzIjpbIlJFQUQiLCJXUklURSIsIlBBWSJdLCJpYnNfY2xpZW50X2lkIjoiNjhkYmRmNjhmMjkwMGMwMDI0N2JlZDA3IiwiaWJzX3VzZXJfaWQiOiI2OGRiZGYxNWYyOTAwYzAwMjQ3YmVjZTAiLCJpYXQiOjE3NTk4NTI4NzMsImV4cCI6MTc1OTg1NTI3M30.qs-6tV5AX2HpA19-4gu4JDMmKxtoQL55Zstt-l-ReNvgIeZMiwiOnjnej2zvnxH_1xeyLFy2hN3YHcepO5qRe2V3qdTpBzLbAag46vt3qf4Ewmcw5xK6cO3wisHy8F1PF0iqgSaA55X99QgpM1ungz3mPkUpSX47YuME_uBWPmA';
 let refreshToken: string | null = null;
+let ibsClientId: string | null = '68dbdf68f2900c00247bed07';
 
 app.use(express.json());
 app.use(
@@ -65,6 +68,7 @@ app.post('/exchange-client-credentials', async (req: Request, res: Response) => 
 
   accessToken = response.access_token;
   refreshToken = response.refresh_token;
+  ibsClientId = response.ibs_client_id;
 
   return res.send({ success: true, message: 'Token generated', data: response });
 });
@@ -82,10 +86,57 @@ app.post('/exchange-client-credentials', async (req: Request, res: Response) => 
  */
 app.post('/webhook', (req: Request, res: Response) => {
   console.log('Received webhook notification:', req.body);
-  
+
   // Process the webhook data as needed
 
   return res.send({ success: true, message: 'Webhook received' });
+});
+
+/**
+ * @swagger
+ * /account:
+ *  post:
+ *   summary: Create a new bank account
+ *   description: This endpoint creates a new bank account under your profile
+ *   tags: [Payment]
+ *   responses:
+ *    '200':
+ *      description: Successfully created bank account.
+ *    '400':
+ *      description: Access token is missing.
+ *    '500':
+ *      description: Internal server error.
+ */
+app.post('/account', async (req: Request, res: Response) => {
+  if (!accessToken || !ibsClientId) {
+    return res
+      .status(401)
+      .send({ success: false, message: 'Access token is missing. Please generate a token first.' });
+  }
+
+  const data = {
+    accountType: 'Savings', // Savings, Current
+    suffix: Math.floor(1000 + Math.random() * 9000), // Random 4-digit suffix
+    metaData: {
+      firstName: 'John',
+      lastName: 'Doe',
+      phoneNumber: '08012345678',
+      bvn: '12345678901',
+      email: 'john.doe@example.com',
+    },
+  };
+
+  const response = await SafeHavenApi.post<GenerateBankAccountResultType>('/accounts', data, {
+    headers: {
+      ClientID: ibsClientId,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  if (!response) {
+    return res.status(500).send({ success: false, message: 'Failed to create account' });
+  }
+
+  return res.send({ success: true, message: 'Account created', data: response.data });
 });
 
 //#endregion
