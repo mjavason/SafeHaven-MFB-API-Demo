@@ -6,6 +6,7 @@ import 'express-async-errors';
 import morgan from 'morgan';
 import { ApiService } from './api.util';
 import { setupSwagger } from './swagger.config';
+import { AccountNameEnquiryResponseType } from './types/account-name-enquiry.type';
 import { GenerateBankAccountResultType } from './types/generate-bank-account.type';
 import { TokenGeneratedType } from './types/generate-token.type';
 
@@ -20,12 +21,14 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const API_URL = process.env.API_URL || 'https://api.sandbox.safehavenmfb.com';
 const CLIENT_ASSERTION = process.env.CLIENT_ASSERTION || 'xxx';
 const CLIENT_ID = process.env.CLIENT_ID || 'xxx';
+const bankCode = '999240'; // 999240 = Sandbox || 090286 = Production
 
 const SafeHavenApi = new ApiService(API_URL);
 
 let accessToken: string | null = null;
 // let refreshToken: string | null = null;
 let ibsClientId: string | null = null;
+let transferSessionId: string | null = null;
 
 app.use(express.json());
 app.use(
@@ -268,6 +271,51 @@ app.get('/verify-checkout-transaction', async (req: Request, res: Response) => {
   }
 
   console.log(response);
+  return res.send({ success: true, message: response.message, data: response.data });
+});
+
+/**
+ * @swagger
+ * /account-name-enquiry:
+ *  post:
+ *   summary: Verify a bank account name before transfers
+ *   description: This endpoint verifies a bank account name and retrieves a required field (sessionId) before making transfers
+ *   tags: [Payment]
+ *   responses:
+ *    '200':
+ *      description: Successfully verified bank account name.
+ *    '400':
+ *      description: Access token is missing.
+ *    '500':
+ *      description: Internal server error.
+ */
+app.post('/account-name-enquiry', async (req: Request, res: Response) => {
+  if (!accessToken || !ibsClientId) {
+    return res
+      .status(401)
+      .send({ success: false, message: 'Access token is missing. Please generate a token first.' });
+  }
+
+  const data = {
+    bankCode, // 999240 = Sandbox || 090286 = Production
+    accountNumber: '6020028038',
+  };
+
+  const response = await SafeHavenApi.post<AccountNameEnquiryResponseType>(
+    '/transfers/name-enquiry',
+    data,
+    {
+      headers: {
+        ClientID: ibsClientId,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+  if (!response) {
+    return res.status(500).send({ success: false, message: 'Name enquiry failed' });
+  }
+
+  transferSessionId = response.data.sessionId;
   return res.send({ success: true, message: response.message, data: response.data });
 });
 
