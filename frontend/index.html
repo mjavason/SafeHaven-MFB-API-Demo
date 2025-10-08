@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>SafeHaven Checkout Demo</title>
+</head>
+
+<body>
+    <h1>Checkout Demo</h1>
+    <button onclick="payWithSafeHaven()">Click Me!</button>
+
+    <script src="https://checkout.safehavenmfb.com/assets/checkout..js"></script>
+    <script type="text/javascript">
+        const clientId = "99040b81cedd775e0fcac491647cdc00";
+        const accountNumber = "0115350641";
+        const bankCode = "999240"; // 999240 = Sandbox || 090286 = Production
+
+        let payWithSafeHaven = () => {
+            let checkOut = SafeHavenCheckout({
+                environment: "Sandbox", //sandbox || production
+                clientId,
+                referenceCode: 'RF' + Math.floor((Math.random() * 1000000000) + 1),
+                customer: {
+                    firstName: "John",
+                    lastName: "Doe",
+                    emailAddress: "johndoe@example.com",
+                    phoneNumber: "+2348032273616"
+                },
+                currency: "NGN", // Must be NGN
+                amount: 100,
+                feeBearer: "customer", // account = We charge you, customer = We charge the customer
+                settlementAccount: {
+                    bankCode,
+                    accountNumber
+                },
+                // redirectUrl: "https://example.com/redirect",
+                //webhookUrl: "",
+                //metadata: { "foo": "bar" }
+                customIconUrl: "https://safehavenmfb.com/assets/images/logo1.svg",
+                onClose: () => { console.log("Checkout Closed") },
+                callback: (response) => { console.log(response) }
+            });
+        }
+    </script>
+</body>
+
+</html>

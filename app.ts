@@ -23,10 +23,9 @@ const CLIENT_ID = process.env.CLIENT_ID || 'xxx';
 
 const SafeHavenApi = new ApiService(API_URL);
 
-let accessToken: string | null =
-  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FwaS5zYW5kYm94LnNhZmVoYXZlbm1mYi5jb20iLCJzdWIiOiI5OTA0MGI4MWNlZGQ3NzVlMGZjYWM0OTE2NDdjZGMwMCIsImF1ZCI6Imh0dHBzOi8vZGlubmcuY29tIiwianRpIjoiYzA3ZDdjYWNjYmRhYzU1NGUzZjcwNmZhNzBiYmZlN2EiLCJncmFudF90eXBlIjoiYWNjZXNzX3Rva2VuIiwic2NvcGVzIjpbIlJFQUQiLCJXUklURSIsIlBBWSJdLCJpYnNfY2xpZW50X2lkIjoiNjhkYmRmNjhmMjkwMGMwMDI0N2JlZDA3IiwiaWJzX3VzZXJfaWQiOiI2OGRiZGYxNWYyOTAwYzAwMjQ3YmVjZTAiLCJpYXQiOjE3NTk4NTU5MTUsImV4cCI6MTc1OTg1ODMxNX0.xWeVn3ThXctQezWCdWEteGS3BBYSBIuxQ3G0fll6C-JiUTcWCksk5c4ebm1hDD-RJGD3RK0uwyrs6KsP8P0oWQlSozCrSclRmCgXm4Bc54p--fLrfi_Mw4LaYue-pwtrfguyiHvqRSSOnmB7uzwKsv3Xl4sUFuNj2fcYYK6m5Bw';
-let refreshToken: string | null = null;
-let ibsClientId: string | null = '68dbdf68f2900c00247bed07';
+let accessToken: string | null = null;
+// let refreshToken: string | null = null;
+let ibsClientId: string | null = null;
 
 app.use(express.json());
 app.use(
@@ -67,7 +66,7 @@ app.post('/exchange-client-credentials', async (req: Request, res: Response) => 
   if (!response) return res.send({ success: false, message: 'Failed to generate token' });
 
   accessToken = response.access_token;
-  refreshToken = response.refresh_token;
+  // refreshToken = response.refresh_token;
   ibsClientId = response.ibs_client_id;
 
   return res.send({ success: true, message: 'Token generated', data: response });
@@ -172,16 +171,12 @@ app.post('/sub-account', async (req: Request, res: Response) => {
     //  callbackUrl: 'https://your-callback-url.com', // ignore to use default webhook url
   };
 
-  const response = await SafeHavenApi.post<any>(
-    '/accounts/v2/subaccount',
-    data,
-    {
-      headers: {
-        ClientID: ibsClientId,
-        Authorization: `Bearer ${accessToken}`,
-      },
+  const response = await SafeHavenApi.post<any>('/accounts/v2/subaccount', data, {
+    headers: {
+      ClientID: ibsClientId,
+      Authorization: `Bearer ${accessToken}`,
     },
-  );
+  });
   if (!response) {
     return res.status(500).send({ success: false, message: 'Failed to create account' });
   }
