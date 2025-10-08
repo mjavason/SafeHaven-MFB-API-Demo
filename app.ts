@@ -227,6 +227,50 @@ app.post('/initiate-verification', async (req: Request, res: Response) => {
   return res.send({ success: true, message: response.message, data: response.data });
 });
 
+/**
+ * @swagger
+ * /verify-checkout-transaction:
+ *  get:
+ *   summary: Verify a checkout transaction
+ *   description: This endpoint verifies a checkout transaction for a sub-account
+ *   tags: [Payment]
+ *   parameters:
+ *    - in: query
+ *      name: referenceCode
+ *      required: true
+ *      description: The reference code of the transaction to verify
+ *      schema:
+ *        type: string
+ *   responses:
+ *    '200':
+ *      description: Successfully verified checkout transaction.
+ *    '400':
+ *      description: Access token is missing.
+ *    '500':
+ *      description: Internal server error.
+ */
+app.get('/verify-checkout-transaction', async (req: Request, res: Response) => {
+  if (!accessToken || !ibsClientId) {
+    return res
+      .status(401)
+      .send({ success: false, message: 'Access token is missing. Please generate a token first.' });
+  }
+
+  const referenceCode = req.query.referenceCode || 'RF123456789';
+  const response = await SafeHavenApi.get<any>(`/checkout/${referenceCode}/verify`, {
+    headers: {
+      ClientID: ibsClientId,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  if (!response) {
+    return res.status(500).send({ success: false, message: 'Failed to verify transaction' });
+  }
+
+  console.log(response);
+  return res.send({ success: true, message: response.message, data: response.data });
+});
+
 //#endregion
 
 //#region Server Setup
