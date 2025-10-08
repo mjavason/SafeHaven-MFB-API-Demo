@@ -22,6 +22,7 @@ const API_URL = process.env.API_URL || 'https://api.sandbox.safehavenmfb.com';
 const CLIENT_ASSERTION = process.env.CLIENT_ASSERTION || 'xxx';
 const CLIENT_ID = process.env.CLIENT_ID || 'xxx';
 const bankCode = '999240'; // 999240 = Sandbox || 090286 = Production
+const beneficiaryAccountNumber="6020037338";
 
 const SafeHavenApi = new ApiService(API_URL);
 
@@ -297,8 +298,8 @@ app.post('/account-name-enquiry', async (req: Request, res: Response) => {
   }
 
   const data = {
-    bankCode, // 999240 = Sandbox || 090286 = Production
-    accountNumber: '6020028038',
+    bankCode,
+    accountNumber: beneficiaryAccountNumber,
   };
 
   const response = await SafeHavenApi.post<AccountNameEnquiryResponseType>(
@@ -316,6 +317,59 @@ app.post('/account-name-enquiry', async (req: Request, res: Response) => {
   }
 
   transferSessionId = response.data.sessionId;
+  return res.send({ success: true, message: response.message, data: response.data });
+});
+
+/**
+ * @swagger
+ * /transfer:
+ *  post:
+ *   summary: Make an intra bank or NIP transfer
+ *   description: This endpoint initiates a transfer to another account. Requires a sessionId from the account-name-enquiry endpoint
+ *   tags: [Payment]
+ *   responses:
+ *    '200':
+ *      description: Successfully initiated transfer.
+ *    '400':
+ *      description: Access token or session ID is missing.
+ *    '500':
+ *      description: Internal server error.
+ */
+app.post('/transfer', async (req: Request, res: Response) => {
+  if (!accessToken || !ibsClientId) {
+    return res
+      .status(401)
+      .send({ success: false, message: 'Access token is missing. Please generate a token first.' });
+  }
+
+  if (!transferSessionId) {
+    return res.status(400).send({
+      success: false,
+      message: 'Session ID is missing. Please call account-name-enquiry endpoint first.',
+    });
+  }
+
+  const data = {
+    nameEnquiryReference: transferSessionId,
+    debitAccountNumber: '0115350641', // Your main account number
+    beneficiaryBankCode: bankCode,
+    beneficiaryAccountNumber,
+    amount: 100.0,
+    saveBeneficiary: false,
+    narration: 'Test transfer',
+    paymentReference: `REF${Date.now()}`,
+  };
+
+  const response = await SafeHavenApi.post<any>('/transfers', data, {
+    headers: {
+      ClientID: ibsClientId,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  if (!response) {
+    return res.status(500).send({ success: false, message: 'Transfer failed' });
+  }
+
   return res.send({ success: true, message: response.message, data: response.data });
 });
 
