@@ -12,7 +12,7 @@
     <script src="https://checkout.safehavenmfb.com/assets/checkout.min.js"></script>
     <script type="text/javascript">
         const clientId = "99040b81cedd775e0fcac491647cdc00";
-        const accountNumber = "0115350641";
+        const accountNumber = "0103944584";
         const bankCode = "999240"; // 999240 = Sandbox || 090286 = Production
         const referenceCode = 'RF' + Math.floor((Math.random() * 1000000000) + 1);
         console.log('Reference code', referenceCode);
@@ -36,11 +36,11 @@
                     accountNumber
                 },
                 // redirectUrl: "https://example.com/redirect",
-                //webhookUrl: "",
+                webhookUrl: "https://mvb9z4nn-5000.uks1.devtunnels.ms/webhook",
                 //metadata: { "foo": "bar" }
                 customIconUrl: "https://safehavenmfb.com/assets/images/logo1.svg",
-                onClose: () => { console.log("Checkout Closed") },
-                callback: (response) => { console.log(response) }
+                // onClose: () => { console.log("Checkout Closed") },
+                // callback: (response) => { console.log(response) }
             });
         }
     </script>

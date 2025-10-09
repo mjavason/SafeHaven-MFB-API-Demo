@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import { ApiService } from './api.util';
 import { setupSwagger } from './swagger.config';
 import { AccountNameEnquiryResponseType } from './types/account-name-enquiry.type';
+import { CheckoutPaymentWebhook } from './types/checkout-payment-webhook.type';
 import { GenerateBankAccountResultType } from './types/generate-bank-account.type';
 import { TokenGeneratedType } from './types/generate-token.type';
 
@@ -22,7 +23,7 @@ const API_URL = process.env.API_URL || 'https://api.sandbox.safehavenmfb.com';
 const CLIENT_ASSERTION = process.env.CLIENT_ASSERTION || 'xxx';
 const CLIENT_ID = process.env.CLIENT_ID || 'xxx';
 const bankCode = '999240'; // 999240 = Sandbox || 090286 = Production
-const beneficiaryAccountNumber="6020037338";
+const beneficiaryAccountNumber = '6020037338';
 
 const SafeHavenApi = new ApiService(API_URL);
 
@@ -89,6 +90,8 @@ app.post('/exchange-client-credentials', async (req: Request, res: Response) => 
  */
 app.post('/webhook', (req: Request, res: Response) => {
   console.log('Received webhook notification:', req.body);
+  let payload = null;
+  if (req.body.type === 'checkout.payment') payload = req.body as CheckoutPaymentWebhook;
 
   // Process the webhook data as needed
 
