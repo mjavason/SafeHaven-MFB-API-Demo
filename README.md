@@ -2,6 +2,8 @@
 
 A comprehensive demo application showcasing SafeHaven MFB's banking API features including authentication, virtual account creation, transfers, and payment checkout integration.
 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/4281c9f6-1f24-422e-93f2-cbad2e24a2a9" />
+
 ## Features
 
 - **OAuth2 Authentication**: Client credentials flow for API access
