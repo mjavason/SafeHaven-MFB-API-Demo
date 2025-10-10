@@ -360,7 +360,7 @@ app.post('/transfer', async (req: Request, res: Response) => {
     amount: 100.0,
     saveBeneficiary: false,
     narration: 'Test transfer',
-    paymentReference: `REF${Date.now()}`,
+    paymentReference: `RF${Date.now()}`,
   };
 
   const response = await SafeHavenApi.post<any>('/transfers', data, {
