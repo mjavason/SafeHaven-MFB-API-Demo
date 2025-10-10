@@ -23,7 +23,7 @@ const API_URL = process.env.API_URL || 'https://api.sandbox.safehavenmfb.com';
 const CLIENT_ASSERTION = process.env.CLIENT_ASSERTION || 'xxx';
 const CLIENT_ID = process.env.CLIENT_ID || 'xxx';
 const bankCode = '999240'; // 999240 = Sandbox || 090286 = Production
-const beneficiaryAccountNumber = '6020037338';
+const beneficiaryAccountNumber = '6020040495';
 
 const SafeHavenApi = new ApiService(API_URL);
 

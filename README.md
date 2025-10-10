@@ -1,55 +1,109 @@
 # SafeHaven-MFB-API-Demo
 
-Simple API to demonstrate the SafeHaven MFB's banking and virtual accounts feature
+A comprehensive demo application showcasing SafeHaven MFB's banking API features including authentication, virtual account creation, transfers, and payment checkout integration.
 
-**Prerequisites**
+## Features
 
-- Node.js and npm (or yarn) installed on your system. You can download them from the [official Node.js website](https://nodejs.org).
+- **OAuth2 Authentication**: Client credentials flow for API access
+- **Virtual Account Management**: Create bank accounts and sub-accounts
+- **Account Name Verification**: Verify account details before transfers
+- **Money Transfers**: Intra-bank and NIP transfers
+- **Payment Checkout**: Frontend integration with SafeHaven's checkout system
+- **Webhook Handling**: Process payment notifications
+- **Transaction Verification**: Verify checkout transactions
 
-**Installation**
+## Prerequisites
 
-1. Clone this repository using git:
+- SafeHaven MFB API credentials (CLIENT_ID, CLIENT_ASSERTION)
+
+## Installation
+
+1. Clone this repository:
 
    ```bash
-   git clone https://github.com/mjavason/...
+   git clone https://github.com/mjavason/SafeHaven-MFB-API-Demo.git
    ```
 
 2. Navigate to the project directory:
 
    ```bash
-   cd project-name...
+   cd SafeHaven-MFB-API-Demo
    ```
 
-3. Install the project's dependencies:
+3. Install dependencies:
 
    ```bash
    npm install
    ```
 
-**Running the project**
+4. Set up environment variables:
+   - Copy `env.sample` to `.env`
+   - Add your SafeHaven API credentials:
+   ```env
+   PORT=5000
+   BASE_URL=http://localhost:5000
+   API_URL=https://api.sandbox.safehavenmfb.com
+   CLIENT_ID=your_client_id_here
+   CLIENT_ASSERTION=your_jwt_assertion_here
+   ```
 
-There are four main scripts defined in this project's `package.json` file:
+## Available Scripts
 
-- **npm run dev**
+- **`npm run dev`** - Start development server with hot reloading (using nodemon)
+- **`npm run build`** - Compile TypeScript to JavaScript in the `build` folder
+- **`npm run start`** - Start the production server (requires build first)
+- **`npm run test`** - Run Jest tests
 
-  - This script is used for development purposes. It will start a development server and enable hot reloading.
+## Frontend Demo
 
-- **npm run build**
+The project includes a simple HTML checkout demo located in the `frontend/` directory. Open `frontend/index.html` in a browser to test the SafeHaven checkout integration.
 
-  - This script is used to build the project for production. It will bundle your code, minify files, and store them in a 'build' folder.
+## API Documentation
 
-- **npm run start**
+After starting the server, access the interactive API documentation at:
+[http://localhost:5000/docs](http://localhost:5000/docs)
 
-  - This script starts the application in production mode. It's what you would typically run after building the project for deployment.
+## Project Structure
 
-- **npm run test**
-  - This script runs the project's tests. Make sure you've installed the packages before running this script.
+```
+├── app.ts                 # Main application file
+├── api.util.ts           # API service utility class
+├── functions.ts          # Helper functions
+├── swagger.config.ts     # Swagger documentation setup
+├── types/               # TypeScript type definitions
+├── frontend/            # HTML checkout demo
+├── notes/              # Generated tokens and account numbers
+└── tests/              # Jest test files
+```
 
-**API Documentation**
+## Usage Flow
 
-After starting the API, you can access the documentation at the `/docs` route. Open your browser and go to [http://localhost:5000/docs](http://localhost:5000/docs) to view the API documentation.
+1. **Authentication**: Call `/exchange-client-credentials` to get an access token
+2. **Account Creation**: Use `/account` to create virtual accounts
+3. **Name Verification**: Before transfers, call `/account-name-enquiry`
+4. **Transfer Money**: Use `/transfer` with the session ID from step 3
+5. **Frontend Checkout**: Use the HTML demo for payment collection
 
-**Additional Notes**
+## Environment Variables
 
-- Refer to the `package.json` file for any additional scripts specific to this project.
-- Configuration files (e.g., `.env`) might be required for the project to run properly. Take a look at the `env.sample` file for a guide. Make sure you have them set up according to your environment.
+Required environment variables (see `env.sample`):
+
+- `PORT` - Server port (default: 5000)
+- `BASE_URL` - Your application's base URL
+- `API_URL` - SafeHaven API URL (sandbox or production)
+- `CLIENT_ID` - Your SafeHaven client ID
+- `CLIENT_ASSERTION` - Your JWT assertion for authentication
+
+## Testing
+
+Run the test suite with:
+
+```bash
+npm test
+```
+
+## Notes
+
+- The application uses SafeHaven's sandbox environment by default
+- Some endpoints like sub-account creation may require additional verification steps
+- Webhook URL needs to be publicly accessible for payment notifications
